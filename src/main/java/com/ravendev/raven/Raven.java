@@ -1,41 +1,34 @@
 package com.ravendev.raven;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-
-//import com.ravendev.raven.plugin.PluginManager;
-
+import com.ravendev.raven.server.RavenServer;
 
 public class Raven {
 
-	private static String version;
-//	public static PluginManager pm;
+	private static final String version = "0.1";
+	private static RavenServer server;
+
+	public static boolean setServer(RavenServer newServer) {
+		if (server == null) {
+			server = newServer;
+			return true;
+		}
+		return false;
+	}
 	
+	public RavenServer getServer() {
+		return server;
+	}
+
 	public static void main(String[] args) {
 		System.setOut(new ConsoleWrapper());
 		System.setErr(new ConsoleWrapper());
-		version = "Unkown";
-		initVersion();
-		System.out.println("Starting Raven by RavenDev version " + getVersion() + "!");
-		System.out.println("Starting PluginManager!");
-//		pm = new PluginManager();
+		System.out.println("Starting Raven v" + getVersion() + "!");
+		setServer(new RavenServer());
 	}
-	
-	private static void initVersion() {
-		try {
-			BufferedReader r = new BufferedReader(new InputStreamReader(Raven.class.getResourceAsStream("version.ver")));
-			version = r.readLine();
-			r.close();
-		} catch (Exception e) {
-			return;
-		}
-	}
-	
+
 	public static String getVersion() {
 		return version;
 	}
 }
-
-
-//TODO: git commit -m 'Commit'
+//TODO: git commit -m 'Commit message'
 //TODO: git push -u origin master
