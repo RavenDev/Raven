@@ -8,7 +8,7 @@ import java.io.InputStreamReader;
 
 public class Raven {
 
-	public static String version;
+	private static String version;
 //	public static PluginManager pm;
 	
 	public static void main(String[] args) {
