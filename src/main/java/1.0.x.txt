@@ -1,0 +1,258 @@
+Minebuilder protocol - version 1.10.x
+----------------------------------Message ID's----------------------------------
+
+Minebuilder packets are prefixed with a message ID.
+A message ID is a signed int (32 bits).
+These are the values:
+
+MSG_POLL_STATUS         19 (new)
+MSG_LOGIN          1
+MSG_GET_PLAYER_DATA       2
+MSG_SET_PLAYER_DATA       13
+MSG_GET_CHUNK          3
+MSG_GET_DATA          11
+MSG_SET_DATA          12
+MSG_SET_BLOCK          4
+MSG_SET_BLOCK_GHOST      18 (new)
+MSG_INTRODUCE          5 (updated)
+MSG_MOVE          6 (updated)
+MSG_LEAVE          7
+MSG_CHAT_BROADCAST       8
+MSG_TIME          15
+MSG_PVP          16 (updated)
+MSG_END_SESSION       17
+
+Note that all data in the entire protocol should be in big endian.
+
+---------------------------------MSG_POLL_STATUS--------------------------------
+A status request from the client.
+Server should respond with the current status.
+
+Client->server:
+(nothing)
+
+Server->client:
+(int32)color
+(string)status
+
+------------------------------------MSG_LOGIN-----------------------------------
+Sends a login request to the server.
+The server then responds with a status message.
+If the value of this message is "OK", 
+then the client proceeds by sending MSG_GET_PLAYER_DATA.
+Otherwise an error message containing the status is shown to the user.
+
+Client->server:
+(string) client version
+(string) nickname
+(string) password
+
+Server->client:
+(string) status
+
+-------------------------------MSG_GET_PLAYER_DATA-------------------------------
+When this message is sent, the client will block until a response
+to this message is received. If it receives a different message first,
+it is rejected and the client will shut down. It requests the player data.
+
+Client->server:
+<nothing>
+
+Server->Client:
+(float)x
+(float)y
+(float)z
+(10 times) {
+(int16)item
+(int16)amount
+}
+
+-------------------------------MSG_SET_PLAYER_DATA-------------------------------
+Request to update the server side player file.
+
+Client->server:
+(string)password 
+(float)x
+(float)y
+(float)z
+(10 times) {
+(int16)item
+(int16)amount
+}
+
+No server side response
+
+----------------------------------MSG_GET_CHUNK---------------------------------
+Request chunk data from server (client side), 
+or chunk update broadcast (server side).
+Note: the chunk next to [0,0,0] is [16,0,0], not [1,0,0]
+
+Client->server:
+(int32)chunk x
+(int32)chunk y
+(int32)chunk z
+
+Server->client:
+(int32)chunk x
+(int32)chunk y
+(int32)chunk z
+(int32)buffer length
+(deflate)buffer
+
+Note:
+The buffer part of the packet is a block of data that is compressed using the
+deflate algorithm. It contains the following data:
+(8192 bytes)block data
+(4096 bytes)lighting data
+
+----------------------------------MSG_GET_DATA----------------------------------
+Request for data (client side),
+or data update broadcast (server side)
+
+Client->server:
+(string)data block name
+
+Server->client:
+(string)data block name
+(int32)data block length
+(raw)data block
+
+----------------------------------MSG_SET_DATA----------------------------------
+Request to change a data block on the server.
+
+Client->server:
+(string) data block name
+(boolean) existsRemotely
+(int32) data block size
+(raw) data block
+
+Server->client:
+broadcast about the update using MSG_GET_DATA
+
+Note:
+if ((existsRemotely) || (!existsLocally)) { do something; }
+else { ignore this message; }
+
+existsLocally should be true if the data block with that name 
+is already present in the server's mbw file.
+
+----------------------------------MSG_SET_BLOCK---------------------------------
+Request to change a block on the server.
+
+Client->server:
+(int32)block x
+(int32)block y
+(int32)block z
+(int16)block value
+
+Note:
+The world should be updated along the block that has been changed.
+The server should broadcast affected chunks. (MSG_GET_CHUNK)
+
+-------------------------------MSG_SET_BLOCK_GHOST------------------------------
+Request to change a block on the server.
+
+Client->server:
+(int32)block x
+(int32)block y
+(int32)block z
+(int16)block value
+
+Note:
+Unlike MSG_SET_BLOCK, chunks should NOT be updated when this
+message is received. The internal state is to be changed, but the chunk
+is not. This message is used when growing trees. The last block will
+eventually be a regular MSG_SET_BLOCK, updating the chunk at once.
+
+----------------------------------MSG_INTRODUCE---------------------------------
+Introduces a new player to the client.
+
+Server->client:
+(int32)player id
+(int32)player name color
+(string)player name
+
+------------------------------------MSG_MOVE------------------------------------
+Update about player movement.
+
+Client->server:
+(float)x
+(float)y
+(float)z
+(float)d
+(float)a
+(bool)dead
+
+Server->client:
+(int32)player id
+(float)x
+(float)y
+(float)z
+(float)d
+(float)a
+(bool)dead
+
+Note:
+The server to client message should be 
+a broadcast to all clients, except for the sender. 
+(the sender ignores it if it is sent anyway)
+
+------------------------------------MSG_LEAVE-----------------------------------
+Notifies the client about a leaving player.
+
+Server->client:
+(int32)player id
+
+
+--------------------------------MSG_CHAT_BROADCAST-------------------------------
+General chat message.
+
+Client->server:
+(string)message
+
+Server->client:
+(string)message
+
+Note:
+The server to client message should be a broadcast to all clients, 
+including the sender
+
+------------------------------------MSG_TIME------------------------------------
+Updates the client side time.
+
+Server->client:
+(float)time
+
+Note: The time must be between 0 and 360. 0 = dawn, 180 = night fall
+
+-------------------------------------MSG_PVP------------------------------------
+Deals damage to a player.
+
+Attacker->server:
+(int32)victim's player id
+(float)source x
+(float)source y
+(float)source z
+(float)damage to deal
+
+Server->victim:
+(int32)victim's player id
+(float)source x
+(float)source y
+(float)source z
+(float)damage to deal
+(boolean)true
+
+Server->the rest:
+(int32)victim's player id
+(float)source x
+(float)source y
+(float)source z
+(float)damage to deal
+(boolean)false
+
+---------------------------------MSG_END_SESSION---------------------------------
+Notifies the server the client is about to disconnect.
+
+Client->server:
+no data.
