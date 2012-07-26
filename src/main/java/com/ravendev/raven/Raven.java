@@ -3,13 +3,13 @@ package com.ravendev.raven;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 
-import com.ravendev.raven.plugin.PluginManager;
+//import com.ravendev.raven.plugin.PluginManager;
 
 
 public class Raven {
 
 	public static String version;
-	public static PluginManager pm;
+//	public static PluginManager pm;
 	
 	public static void main(String[] args) {
 		System.setOut(new ConsoleWrapper());
@@ -18,7 +18,7 @@ public class Raven {
 		initVersion();
 		System.out.println("Starting Raven by RavenDev version " + getVersion() + "!");
 		System.out.println("Starting PluginManager!");
-		pm = new PluginManager();
+//		pm = new PluginManager();
 	}
 	
 	private static void initVersion() {
