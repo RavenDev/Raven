@@ -15,7 +15,7 @@ public class Raven {
 		return false;
 	}
 	
-	public RavenServer getServer() {
+	public static RavenServer getServer() {
 		return server;
 	}
 
